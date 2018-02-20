@@ -1,4 +1,4 @@
-def commonPattern = '%d{dd/MM HH:mm:ss:SS} %level [%thread] %logger{10} %msg%n'
+def commonPattern = '%d{dd/MM HH:mm:ss:SS} [%thread] %level %logger{10} %msg%n'
 
 appender('CONSOLE', ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
@@ -7,5 +7,6 @@ appender('CONSOLE', ConsoleAppender) {
 }
 
 logger('error-ch', DEBUG, ['CONSOLE'], false)
+logger('result', DEBUG, ['CONSOLE'], false)
 
 root(WARN, ['CONSOLE'])

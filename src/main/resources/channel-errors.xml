@@ -21,6 +21,6 @@
 
     <int:outbound-channel-adapter channel="someChannel"
                                   method="handlerInt">
-        <bean class="SometimesThrownService" />
+        <bean class="ru.milovtim.service.SometimesThrownService" />
     </int:outbound-channel-adapter>
 </beans>
