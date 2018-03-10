@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:int-script="http://www.springframework.org/schema/integration/scripting"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/scripting http://www.springframework.org/schema/integration/scripting/spring-integration-scripting.xsd">
+
+    <int:channel id="sourceChannel">
+        <int:interceptors><int:wire-tap channel="logChannel"/></int:interceptors>
+    </int:channel>
+    <int:channel id="splitChannel" />
+    <int:channel id="transformedChannel"/>
+    <int:channel id="logChannel" />
+
+
+    <int:inbound-channel-adapter channel="sourceChannel">
+        <int-script:script lang="groovy">
+       <![CDATA[
+           def lc = new pojo.ListContainer()
+           lc.list = (1..10).collect { new Random().nextInt(100) }
+           lc
+       ]]>
+        </int-script:script>
+        <int:poller fixed-delay="5000"/>
+    </int:inbound-channel-adapter>
+
+
+    <int:splitter input-channel="sourceChannel"
+                  output-channel="splitChannel"
+                  expression="payload.list" />
+
+
+    <int:transformer input-channel="splitChannel"
+                     output-channel="transformedChannel"
+                     expression="payload * 2" />
+
+
+    <int:aggregator id="agg"
+                    expression="new pojo.ListContainer(#this.![payload])"
+                    input-channel="transformedChannel"
+                    output-channel="logChannel">
+    </int:aggregator>
+
+    <int:logging-channel-adapter channel="logChannel"
+                                 logger-name="error-ch"
+                                 level="DEBUG" />
+
+    <!--<int:outbound-channel-adapter channel="someChannel"-->
+                                  <!--method="handlerInt">-->
+        <!--<bean class="SometimesThrownService" />-->
+    <!--</int:outbound-channel-adapter>-->
+</beans>
