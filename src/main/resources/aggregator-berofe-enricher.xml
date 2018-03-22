@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:p="http://www.springframework.org/schema/p"
+             xmlns:c="http://www.springframework.org/schema/c"
+             xmlns:script="http://www.springframework.org/schema/integration/scripting"
+             xmlns:stream="http://www.springframework.org/schema/integration/stream"
+             xmlns:task="http://www.springframework.org/schema/task"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/scripting http://www.springframework.org/schema/integration/scripting/spring-integration-scripting.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder />
+    <context:annotation-config />
+
+    <beans:bean id="dynamicPeriodicTrigger"
+                class="org.springframework.integration.util.DynamicPeriodicTrigger"
+                p:initialDelay="1000"
+                p:fixedRate="true"
+                c:_0="${pollPeriod}" />
+
+    <inbound-channel-adapter expression="new java.util.Random().nextInt(100)"
+                             channel="originChannel" >
+        <poller trigger="dynamicPeriodicTrigger" />
+    </inbound-channel-adapter>
+
+    <channel id="originChannel">
+        <!--<queue capacity="100" />-->
+        <interceptors>
+            <wire-tap channel="outputLogger" />
+        </interceptors>
+    </channel>
+
+<!--
+    <header-enricher input-channel="originChannel" output-channel="pollResultChannel">
+        <poller fixed-delay="2000" />
+        <header name="chunkNumber" expression="T(java.lang.System).currentTimeMillis()" />
+    </header-enricher>
+
+    <channel id="pollResultChannel"/>-->
+
+
+    <!--&lt;!&ndash;-->
+    <beans:bean id="releaseStrategy"
+                class="org.springframework.integration.aggregator.MessageCountReleaseStrategy"
+                c:_0="12"/>
+
+    <beans:bean id="msgStore"
+                class="org.springframework.integration.store.SimpleMessageStore" />
+    <beans:bean id="messageGroupStoreReaper"
+                class="org.springframework.integration.store.MessageGroupStoreReaper"
+                p:timeout="2000"
+                c:_0-ref="msgStore" />
+    <task:scheduler id="msg-group-reaper" />
+    <task:scheduled-tasks scheduler="msg-group-reaper">
+        <task:scheduled ref="messageGroupStoreReaper" method="run" fixed-rate="500"/>
+    </task:scheduled-tasks>
+
+    <aggregator id="treeChangesAggregator"
+                input-channel="originChannel"
+                output-channel="resultLogger"
+
+                release-strategy="releaseStrategy"
+                correlation-strategy-expression="((payload % 2) > 0? 'a': 'b')"
+
+                send-partial-result-on-expiry="true"
+                message-store="msgStore"/>
+
+    <channel id="outputLogger"/>
+    <!--<channel id="outputLoggerWithChunkNumber"/>-->
+    <stream:stdout-channel-adapter channel="outputLogger"
+                                   append-newline="true"/>
+
+    <logging-channel-adapter id="resultLogger"
+                             logger-name="result"
+                             expression="payload"
+                             level="DEBUG"/>
+</beans:beans>
