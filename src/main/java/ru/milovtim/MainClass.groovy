@@ -7,7 +7,7 @@ class MainClass {
 
     static void main(String[] args) {
         Preconditions.checkArgument(args.length > 0, "Spring config name must be provided")
-        def ctx = new ClassPathXmlApplicationContext(args[0] + ".xml")
+        def ctx = new ClassPathXmlApplicationContext("context/" + args[0] + ".xml")
         ctx.refresh()
         System.in.read()
     }

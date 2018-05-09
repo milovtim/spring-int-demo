@@ -72,7 +72,7 @@
     <beans:bean id="manualExporter"
                 class="org.springframework.jmx.export.MBeanExporter"
                 p:server-ref="mBeanServer"/>
-    <beans:bean class="ru.milovtim.MbeansContext"
+    <beans:bean class="ru.milovtim.context.MbeansContext"
                 p:trigger-ref="dynamicPeriodicTrigger"
                 p:exporter-ref="manualExporter"
                 p:taskExecutor-ref="worker-executor"/>

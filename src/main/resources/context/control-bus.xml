@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:stream="http://www.springframework.org/schema/integration/stream"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+             http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+             http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+             http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder />
+    <context:annotation-config />
+
+    <beans:import resource="classpath:context/common/dynamic-trigger.xml" />
+
+    <beans:bean class="java.util.Random" id="rand" />
+
+    <inbound-channel-adapter id="numberGenerator"
+                             auto-startup="false"
+                             expression="@rand.nextInt(100)"
+                             channel="resultLogger" >
+        <poller trigger="dynamicFixedDelayTrigger" />
+    </inbound-channel-adapter>
+
+
+    <stream:stdout-channel-adapter id="outputLogger"
+                                   append-newline="true"/>
+
+
+    <inbound-channel-adapter channel="controlChannel"
+                             expression="'@numberGenerator.running? @numberGenerator.stop(): @numberGenerator.start()'">
+        <poller fixed-delay="7000"/>
+    </inbound-channel-adapter>
+
+    <control-bus input-channel="controlChannel" output-channel="resultLogger"/>
+
+    <logging-channel-adapter id="resultLogger"
+                             logger-name="result"
+                             level="DEBUG"/>
+</beans:beans>

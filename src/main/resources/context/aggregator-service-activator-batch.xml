@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:c="http://www.springframework.org/schema/c"
+             xmlns:stream="http://www.springframework.org/schema/integration/stream"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+             http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+
+             http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+
+             http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config />
+
+    <beans:import resource="common/dynamic-trigger.xml" />
+    <beans:bean class="ru.milovtim.context.CommonContext" />
+    <beans:bean id="batchSize"
+                class="java.lang.Integer"
+                c:_0="10" />
+
+    <inbound-channel-adapter channel="sourceChannel" expression="@rand.nextInt(@batchSize)">
+        <poller trigger="dynamicFixedDelayTrigger" />
+    </inbound-channel-adapter>
+
+    <beans:bean id="sourceQueue" class="java.util.concurrent.LinkedBlockingQueue" />
+    <channel id="sourceChannel">
+        <queue ref="sourceQueue"/>
+        <interceptors>
+            <wire-tap channel="sourceOutputLogger" />
+        </interceptors>
+    </channel>
+
+    <channel id="sourceOutputLogger"/>
+    <stream:stdout-channel-adapter channel="sourceOutputLogger"
+                                   append-newline="true"/>
+
+
+    <aggregator id="treeChangesAggregator"
+                input-channel="sourceChannel"
+                output-channel="resultLogger"
+
+                expire-groups-upon-completion="true"
+
+                send-partial-result-on-expiry="true"
+                group-timeout="2000"
+
+                release-strategy-expression="@batchSize == size()"
+                correlation-strategy-expression="T(java.lang.Thread).currentThread().id">
+        <poller fixed-delay="1000" />
+    </aggregator>
+
+
+
+    <logging-channel-adapter id="resultLogger"
+                             logger-name="result"
+                             expression="payload"
+                             level="DEBUG"/>
+
+    <beans:bean class="ru.milovtim.pojo.QueueSizeMbeanExporter"
+                c:_0-ref="sourceQueue" />
+</beans:beans>

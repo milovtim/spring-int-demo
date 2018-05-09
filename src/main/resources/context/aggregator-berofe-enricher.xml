@@ -11,33 +11,19 @@
              xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/scripting http://www.springframework.org/schema/integration/scripting/spring-integration-scripting.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
     <context:property-placeholder />
-    <context:annotation-config />
 
-    <beans:bean id="dynamicPeriodicTrigger"
-                class="org.springframework.integration.util.DynamicPeriodicTrigger"
-                p:initialDelay="1000"
-                p:fixedRate="true"
-                c:_0="${pollPeriod}" />
+    <beans:bean id="rand" class="java.util.Random" />
 
-    <inbound-channel-adapter expression="new java.util.Random().nextInt(100)"
+    <inbound-channel-adapter expression="@rand.nextInt(100)"
                              channel="originChannel" >
-        <poller trigger="dynamicPeriodicTrigger" />
+        <poller fixed-delay="${pollPeriod}" />
     </inbound-channel-adapter>
 
     <channel id="originChannel">
-        <!--<queue capacity="100" />-->
         <interceptors>
             <wire-tap channel="outputLogger" />
         </interceptors>
     </channel>
-
-<!--
-    <header-enricher input-channel="originChannel" output-channel="pollResultChannel">
-        <poller fixed-delay="2000" />
-        <header name="chunkNumber" expression="T(java.lang.System).currentTimeMillis()" />
-    </header-enricher>
-
-    <channel id="pollResultChannel"/>-->
 
 
     <!--&lt;!&ndash;-->

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:p="http://www.springframework.org/schema/p"
+             xmlns:c="http://www.springframework.org/schema/c"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="application.properties"/>
+
+    <bean id="dynamicFixedRateTrigger"
+          class="org.springframework.integration.util.DynamicPeriodicTrigger"
+          p:initialDelay="${dynaTrigger.initDelay:1000}"
+          p:fixedRate="true"
+          c:_0="${dynaTrigger.period}" />
+
+    <bean id="dynamicFixedDelayTrigger"
+          class="org.springframework.integration.util.DynamicPeriodicTrigger"
+          p:initialDelay="${dynaTrigger.initDelay:1000}"
+          c:_0="${dynaTrigger.period}" />
+
+
+    <context:mbean-server id="mBeanServer"/>
+    <context:mbean-export default-domain="ru.milovtim" registration="replaceExisting" />
+    <bean id="manualExporter"
+          class="org.springframework.jmx.export.MBeanExporter"
+          p:server-ref="mBeanServer"/>
+
+
+    <bean class="ru.milovtim.context.TriggerMbeanContext"
+          c:_0-ref="dynamicFixedDelayTrigger"
+          p:exporter-ref="manualExporter" />
+</beans>

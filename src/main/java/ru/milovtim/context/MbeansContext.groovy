@@ -1,4 +1,4 @@
-package ru.milovtim
+package ru.milovtim.context
 
 import org.springframework.integration.util.DynamicPeriodicTrigger
 import org.springframework.jmx.export.MBeanExporter
@@ -11,8 +11,9 @@ import javax.management.ObjectName
 
 @ManagedResource("ru.milovtim:name=executorQueue,type=TaskExecutor")
 class MbeansContext {
-    ThreadPoolTaskExecutor taskExecutor
     MBeanExporter exporter
+
+    ThreadPoolTaskExecutor taskExecutor
     DynamicPeriodicTrigger trigger
 
     @ManagedMetric(displayName = "executorQueueSize")

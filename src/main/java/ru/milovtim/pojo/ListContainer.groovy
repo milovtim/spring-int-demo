@@ -1,4 +1,4 @@
-package pojo
+package ru.milovtim.pojo
 
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic

@@ -17,12 +17,12 @@
     <int:inbound-channel-adapter channel="sourceChannel">
         <int-script:script lang="groovy">
        <![CDATA[
-           def lc = new pojo.ListContainer()
-           lc.list = (1..10).collect { new Random().nextInt(100) }
-           lc
-       ]]>
+            def lc = new ru.milovtim.pojo.ListContainer()
+            lc.list = (1..10).collect { new Random().nextInt(100) }
+            lc
+            ]]>
         </int-script:script>
-        <int:poller fixed-delay="5000"/>
+        <int:poller trigger="d"/>
     </int:inbound-channel-adapter>
 
 
@@ -37,7 +37,7 @@
 
 
     <int:aggregator id="agg"
-                    expression="new pojo.ListContainer(#this.![payload])"
+                    expression="new ru.milovtim.pojo.ListContainer(#this.![payload])"
                     input-channel="transformedChannel"
                     output-channel="logChannel">
     </int:aggregator>
