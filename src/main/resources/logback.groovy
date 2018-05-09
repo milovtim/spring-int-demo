@@ -8,5 +8,6 @@ appender('CONSOLE', ConsoleAppender) {
 
 logger('error-ch', DEBUG, ['CONSOLE'], false)
 logger('result', DEBUG, ['CONSOLE'], false)
+logger('org.springframework.integration.endpoint.SourcePollingChannelAdapter', INFO, ['CONSOLE'], false)
 
 root(WARN, ['CONSOLE'])

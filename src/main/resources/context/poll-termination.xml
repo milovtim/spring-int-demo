@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:p="http://www.springframework.org/schema/p"
+             xmlns:c="http://www.springframework.org/schema/c"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+             http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+
+             http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder />
+    <context:annotation-config />
+
+    <beans:import resource="classpath:context/common/dynamic-trigger.xml" />
+
+    <!--коннект к редису и простой стринг-темплейт -->
+    <beans:bean id="redisConnectionFactory"
+                class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+                p:database="1" />
+
+    <beans:bean id="stringRedisTemplate"
+                class="org.springframework.data.redis.core.StringRedisTemplate"
+                c:_0-ref="redisConnectionFactory" />
+
+    <inbound-channel-adapter id="redisListQueuePollingAdapter"
+                             expression="@stringRedisTemplate.opsForList().rightPop('lst')?: 0"
+                             channel="queueChannel">
+        <poller fixed-delay="0" />
+    </inbound-channel-adapter>
+
+    <filter expression="payload eq 0"
+            input-channel="queueChannel"
+            output-channel="stopPollChannel"
+            discard-channel="resultLogger" />
+
+
+    <service-activator input-channel="stopPollChannel"
+                       output-channel="controlChannel"
+                       expression="'@redisListQueuePollingAdapter.stop()'"/>
+
+    <logging-channel-adapter id="resultLogger"
+                             logger-name="result"
+                             level="DEBUG"/>
+</beans:beans>
