@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+       xmlns:beans="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <beans:import resource="classpath:context/common/dynamic-trigger.xml" />
+
+    <inbound-channel-adapter expression="T(org.apache.commons.lang3.RandomStringUtils).randomAlphabetic(5)"
+                                 channel="someChannel" >
+        <poller trigger="dynamicFixedDelayTrigger" />
+    </inbound-channel-adapter>
+
+    <channel id="someChannel"/>
+
+
+    <scatter-gather input-channel="someChannel"
+                        output-channel="resultLogger">
+        <scatterer apply-sequence="true">
+            <recipient channel="asteriskChannel"/>
+            <recipient channel="reverseChannel" />
+        </scatterer>
+        <gatherer expression="#this[0].payload.concat('---').concat(#this[1].payload)" />
+    </scatter-gather>
+
+    <task:executor id="asterisk" pool-size="1" queue-capacity="0" />
+    <channel id="asteriskChannel">
+        <dispatcher task-executor="asterisk"/>
+    </channel>
+    <transformer input-channel="asteriskChannel" expression="'*'.concat(payload).concat('*')"/>
+
+    <task:executor id="reverse" pool-size="1" queue-capacity="0" />
+    <channel id="reverseChannel">
+        <dispatcher task-executor="reverse"/>
+    </channel>
+    <transformer input-channel="reverseChannel" expression="T(org.apache.commons.lang3.StringUtils).reverse(payload)"/>
+
+
+    <logging-channel-adapter id="resultLogger"
+                                 logger-name="result"
+                                 level="DEBUG"/>
+</beans:beans>

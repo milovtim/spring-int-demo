@@ -1,14 +1,12 @@
 package ru.milovtim.context
 
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.integration.util.DynamicPeriodicTrigger
 import org.springframework.jmx.export.MBeanExporter
-import org.springframework.jmx.export.annotation.ManagedResource
 
-import javax.annotation.PostConstruct
 import javax.management.ObjectName
 
-class TriggerMbeanContext {
+class TriggerMbeanContext implements InitializingBean {
     final DynamicPeriodicTrigger trigger
 
     MBeanExporter exporter
@@ -17,13 +15,12 @@ class TriggerMbeanContext {
         this.trigger = trigger
     }
 
-    @Autowired
     void setExporter(MBeanExporter exporter) {
         this.exporter = exporter
     }
 
-    @PostConstruct
-    void init() {
+    @Override
+    void afterPropertiesSet() throws Exception {
         exporter.registerManagedResource(trigger, ObjectName.getInstance('ru.milovtim:name=delayTrigger,type=Trigger'))
     }
 }
