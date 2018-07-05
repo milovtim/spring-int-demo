@@ -52,7 +52,8 @@
 
     <service-activator input-channel="processChannel"
                        output-channel="resultLogger">
-        <script:script lang="groovy">import ru.milovtim.domain.NumberToMultiply
+        <script:script lang="groovy">
+            import ru.milovtim.domain.NumberToMultiply
 
         java.util.concurrent.TimeUnit.SECONDS.sleep(2)
         payload.collect { NumberToMultiply it ->

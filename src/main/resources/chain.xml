@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:p="http://www.springframework.org/schema/p"
+             xmlns:c="http://www.springframework.org/schema/c"
+             xmlns:script="http://www.springframework.org/schema/integration/scripting"
+             xmlns:stream="http://www.springframework.org/schema/integration/stream"
+             xmlns:task="http://www.springframework.org/schema/task"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/scripting http://www.springframework.org/schema/integration/scripting/spring-integration-scripting.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder />
+    <context:annotation-config />
+
+    <beans:bean id="dynamicPeriodicTrigger"
+                class="org.springframework.integration.util.DynamicPeriodicTrigger"
+                p:initialDelay="1000"
+                p:fixedRate="true"
+                c:_0="${pollPeriod}" />
+
+    <inbound-channel-adapter expression="new java.util.Random().nextInt(100)"
+                             channel="originChannel" >
+        <poller trigger="dynamicPeriodicTrigger" />
+    </inbound-channel-adapter>
+
+    <channel id="originChannel">
+        <interceptors><wire-tap channel="stdoutChannel" /></interceptors>
+    </channel>
+
+    <channel id="stdoutChannel"/>
+
+    <stream:stdout-channel-adapter channel="stdoutChannel"
+                                   append-newline="true"/>
+
+
+    <chain input-channel="originChannel">
+        <header-enricher>
+            <header name="customTS" expression="T(java.lang.System).currentTimeMillis()" />
+        </header-enricher>
+        <filter expression="(payload % 2) eq 0" />
+        <logging-channel-adapter id="resultLogger"
+                                 logger-name="result"
+                                 expression="payload"
+                                 level="DEBUG"/>
+    </chain>
+
+
+</beans:beans>
